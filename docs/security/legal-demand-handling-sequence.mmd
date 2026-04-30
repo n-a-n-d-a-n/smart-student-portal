@@ -1,0 +1,57 @@
+sequenceDiagram
+    autonumber
+    participant Requestor as Issuing Authority / Requestor
+    participant Intake as Legal Intake Channel
+    participant Counsel as Legal Counsel
+    participant Sec as Security Lead
+    participant Ed as Editorial Standards Lead
+    participant Platform as Platform Ops
+    participant Custodian as Data Custodian
+    participant Audit as Immutable Audit Log
+    participant Exec as Executive Duty Officer
+
+    Note over Requestor,Audit: High-level legal-demand workflow (illustrative only)
+
+    Requestor->>Intake: Serve subpoena/order/warrant request
+    Intake->>Audit: Log receipt event (timestamp, request ID, requester metadata)
+    Intake->>Counsel: Route request + artifacts for validation
+
+    Counsel->>Counsel: Validate authenticity, jurisdiction, scope, enforceability
+    Counsel->>Audit: Log legal validation result + rationale
+
+    alt Invalid / defective / overbroad
+        Counsel->>Requestor: Reject, seek correction, or move to narrow/challenge
+        Counsel->>Audit: Log challenge/rejection action
+    else Potentially valid request
+        Counsel->>Sec: Request data-map feasibility and minimization check
+        Counsel->>Ed: Assess source-protection/editorial sensitivity
+        Sec->>Audit: Log technical scope feasibility outcome
+        Ed->>Audit: Log editorial risk assessment outcome
+
+        alt Preserve only (hold)
+            Counsel->>Platform: Issue scoped legal hold instruction (matter ID, scope, expiry review)
+            Platform->>Custodian: Apply hold to specified records
+            Custodian->>Audit: Log hold applied (scope hash, approver, time)
+            Counsel->>Requestor: Confirm preservation per legal requirements
+        else Compelled production
+            Counsel->>Sec: Authorize minimal compliant extraction plan
+            Sec->>Custodian: Execute scoped export workflow
+            Custodian->>Audit: Log extraction chain-of-custody
+            Custodian->>Counsel: Deliver encrypted package + manifest
+            Counsel->>Counsel: Final privilege/source-protection review
+            Counsel->>Requestor: Produce minimum required data (if compelled)
+            Counsel->>Audit: Log production details + legal basis
+        end
+    end
+
+    alt Notification legally permitted
+        Counsel->>Ed: Approve source/user notification plan
+        Ed->>Audit: Log notification decision + timeline
+    else Gag/seal restrictions apply
+        Counsel->>Audit: Log deferred-notification basis and review date
+    end
+
+    Counsel->>Exec: Provide case summary + residual risk
+    Exec->>Audit: Record executive oversight acknowledgment
+
+    Note over Intake,Audit: All privileged actions produce immutable audit events and periodic review entries.
